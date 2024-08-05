@@ -9,6 +9,10 @@ https://sprig.hackclub.com/gallery/getting_started
 */
 
 let mazeSize = 10 // must be even, min: 10
+let minMazeSize = 10
+let maxMazeSize = 40
+
+let playing = false;
 
 const player1 = "p"
 const player2 = "q"
@@ -128,19 +132,22 @@ if(mazeSize % 2){
   mazeSize--;
 }
 
-let mapBitmap = ''
-for(let i = 0; i < mazeSize * 2 + 1; i++){
-  let row = ''
-  //for(let j = 0; j < (mazeSize + 2) * 2 + 1; j++){
-  for(let j = 0; j < mazeSize * 1.25 * 2 + 3; j++){
-    //row += 'b'
-    row += '.'
+const updateMapBitmap = () => {
+  let mapBitmap = ''
+  for(let i = 0; i < mazeSize * 2 + 1; i++){
+    let row = ''
+    //for(let j = 0; j < (mazeSize + 2) * 2 + 1; j++){
+    for(let j = 0; j < mazeSize * 1.25 * 2 + 3; j++){
+      //row += 'b'
+      row += '.'
+    }
+    row += '\n'
+    mapBitmap += row
   }
-  row += '\n'
-  mapBitmap += row
-}
 
-setMap(mapBitmap)
+  setMap(mapBitmap)
+}
+updateMapBitmap();
 
 setBackground(backgroundColor)
 
@@ -148,43 +155,6 @@ setPushables({
   [ player1 ]: [],
   [ player2 ]: []
 })
-
-onInput("w", () => {
-  getFirst(player1).y--
-})
-onInput("s", () => {
-  getFirst(player1).y++
-})
-onInput("a", () => {
-  getFirst(player1).x--
-})
-onInput("d", () => {
-  getFirst(player1).x++
-})
-
-onInput("i", () => {
-  getFirst(player2).y--
-})
-onInput("k", () => {
-  getFirst(player2).y++
-})
-onInput("j", () => {
-  getFirst(player2).x--
-})
-onInput("l", () => {
-  getFirst(player2).x++
-})
-
-
-afterInput(() => {
-  if(getFirst(player1).y === height() - 1){
-    console.log("Player 1 wins!");
-  }
-  if(getFirst(player2).y === height() - 1){
-    console.log("Player 2 wins!");
-  }
-})
-
 
 /* Rekurzivní náhodné hloubkové hledání */
 const generate_maze = (width, height, start) => {
@@ -240,6 +210,8 @@ const generate_maze = (width, height, start) => {
 };
 
 const renderMaze = () => {
+    clearText();
+  
     const gameWidth = (mazeSize + 2) * 2 + 1; // Calculate the total width of the game 
     const boundWidth = mazeSize * 1.25 * 2 + 3; // didn't know I can use width()
     const leftMazeStart = 1; // Calculate the starting position for the left maze
@@ -281,4 +253,95 @@ const renderMaze = () => {
     });
 }
 
-renderMaze();
+onInput("w", () => {
+  if(playing) getFirst(player1).y--;
+  else {
+    updateMapBitmap();
+    renderMaze();
+    playing = true;
+  }
+})
+onInput("s", () => {
+  if(playing) getFirst(player1).y++;
+})
+onInput("a", () => {
+  if(playing) getFirst(player1).x--;
+})
+onInput("d", () => {
+  if(playing) getFirst(player1).x++;
+})
+
+onInput("i", () => {
+  if(playing) getFirst(player2).y--;
+})
+onInput("k", () => {
+  if(playing) getFirst(player2).y++;
+})
+onInput("j", () => {
+  if(playing) getFirst(player2).x--;
+  else if(mazeSize > minMazeSize){
+    mazeSize -= 2;
+  }
+})
+onInput("l", () => {
+  if(playing) getFirst(player2).x++;
+  else if(mazeSize < maxMazeSize){
+    mazeSize += 2;
+  }
+})
+
+
+afterInput(() => {
+  if(playing){
+    if(playing && getFirst(player1).y === height() - 1){
+      win(1);
+    }
+    if(playing && getFirst(player2).y === height() - 1){
+      win(2);
+    }
+  } else {
+    menu();
+  }
+})
+
+// menu
+const menu = () => {
+  clearText();
+  
+  addText("Multiplayer", {y: 2, color: color`2`});
+  addText("maze", {y: 3, color: color`2`});
+
+  addText("Difficulty:  " + mazeSize, {y: 6, color: color`2`});
+  if(mazeSize > minMazeSize){
+    addText("<", {x: 15, y: 6, color: color`2`});
+    addText("j", {x: 15, y: 7, color: color`2`});
+  } else {
+    addText(" ", {x: 15, y: 6, color: color`2`});
+    addText(" ", {x: 15, y: 7, color: color`2`});
+  }
+  if(mazeSize < maxMazeSize){
+    addText(">", {x: 18, y: 6, color: color`2`});
+    addText("l", {x: 18, y: 7, color: color`2`});
+  } else {
+    addText(" ", {x: 18, y: 6, color: color`2`});
+    addText(" ", {x: 18, y: 7, color: color`2`});
+  }
+  
+  addText("W to start", {y: 13, color: color`2`});
+}
+
+menu();
+
+const win = (player) => {
+  playing = false;
+  
+  clearText();
+  
+  updateMapBitmap();
+
+  addText("Player " + player + " wins!", {y: 3, color: color`2`});
+  
+  addText("W to play again", {y: 10, color: color`2`});
+  addText("Any to", {y: 13, color: color`2`});
+  addText("return to menu", {y: 14, color: color`2`});
+}
