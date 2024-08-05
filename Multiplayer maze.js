@@ -14,6 +14,8 @@ let maxMazeSize = 40
 
 let playing = false;
 
+let inputBlock = false;
+
 const player1 = "p"
 const player2 = "q"
 const wall = "w"
@@ -254,6 +256,7 @@ const renderMaze = () => {
 }
 
 onInput("w", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player1).y--;
   else {
     updateMapBitmap();
@@ -262,28 +265,35 @@ onInput("w", () => {
   }
 })
 onInput("s", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player1).y++;
 })
 onInput("a", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player1).x--;
 })
 onInput("d", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player1).x++;
 })
 
 onInput("i", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player2).y--;
 })
 onInput("k", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player2).y++;
 })
 onInput("j", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player2).x--;
   else if(mazeSize > minMazeSize){
     mazeSize -= 2;
   }
 })
 onInput("l", () => {
+  if(inputBlock) return;
   if(playing) getFirst(player2).x++;
   else if(mazeSize < maxMazeSize){
     mazeSize += 2;
@@ -292,6 +302,7 @@ onInput("l", () => {
 
 
 afterInput(() => {
+  if(inputBlock) return;
   if(playing){
     if(playing && getFirst(player1).y === height() - 1){
       win(1);
@@ -333,15 +344,26 @@ const menu = () => {
 menu();
 
 const win = (player) => {
+  inputBlock = true;
   playing = false;
   
   clearText();
   
   updateMapBitmap();
 
-  addText("Player " + player + " wins!", {y: 3, color: color`2`});
+  switch(player){
+    case 1:
+      addText("Player " + player + " wins!", {y: 3, color: color`3`});
+    case 2:
+      addText("Player " + player + " wins!", {y: 3, color: color`7`});
+  }
   
   addText("W to play again", {y: 10, color: color`2`});
   addText("Any to", {y: 13, color: color`2`});
   addText("return to menu", {y: 14, color: color`2`});
+
+  // 1s delay
+  setTimeout(() => {
+    inputBlock = false;
+  }, 1000)
 }
